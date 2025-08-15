@@ -1,3 +1,5 @@
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+
 # Colournator
 
 Colournator ist eine Webanwendung zur Umrechnung und Anzeige von Farben in verschiedenen Formaten. Sie unterstützt HEX, RGB, CMYK, HSL und Farbnamen und bietet einen interaktiven Farbpicker sowie eine Live-Vorschau.
