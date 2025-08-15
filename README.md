@@ -26,4 +26,4 @@ Wolfgang Saal, Böllenborn
 
 ## Lizenz
 
-Dieses Projekt steht unter einer freien Lizenz. Siehe ggf. weitere Hinweise im
+Dieses Projekt steht unter einer freien MIT-Lizenz.
