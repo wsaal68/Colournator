@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Colournator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Anwendung zur Umrechnung von Farben zwischen den Formaten" />
+  <meta name="keywords" content="farben, umrechner, live, picker, hex, rgb, cmyk,hsl, farbname" />
+  <meta name="author" content="Wolfgang Saal, Böllenborn" />
+  <style>
+    :root {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --text: #111827;
+      --accent: #2563eb;
+      --border: #e5e7eb;
+      --error: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: var(--card);
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      padding: 2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .input-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .sub-fields {
+      display: flex;
+      gap: 0.3rem;
+    }
+
+    .sub-fields input[type="text"] {
+      width: 3.5rem;
+      text-align: center;
+    }
+
+    .full-field {
+      flex-grow: 1;
+    }
+
+    input[type="text"],
+    input[type="color"] {
+      padding: 0.5rem;
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 0.4rem;
+      background-color: #fff;
+      color: var(--text);
+    }
+
+    input[disabled] {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    input.error {
+      border-color: var(--error);
+      background-color: #fee2e2;
+    }
+
+    .preview {
+      height: 100px;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      margin-top: 1.5rem;
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .reset-button {
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .reset-button:hover {
+      background-color: #1e40af;
+    }
+
+    @media (max-width: 600px) {
+      .input-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .sub-fields {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Colournator</h1>
+
+  <div class="container">
+    <div class="color-row">
+      <div class="form-group" style="flex: 1;">
+        <label for="colorPicker">Farb-Picker</label>
+        <input type="color" id="colorPicker">
+      </div>
+      <div class="preview" id="preview" style="flex: 2;"></div>
+    </div>
+
+    <div class="form-grid">
+      <!-- HEX -->
+      <div class="form-group">
+        <label>HEX</label>
+        <div class="sub-fields">
+          <input type="text" maxlength="2" id="hexR" placeholder="RR">
+          <input type="text" maxlength="2" id="hexG" placeholder="GG">
+          <input type="text" maxlength="2" id="hexB" placeholder="BB">
+        </div>
+        <input type="text" id="hexFull" placeholder="#rrggbb" disabled>
+      </div>
+
+      <!-- RGB -->
+      <div class="form-group">
+        <label>RGB</label>
+        <div class="sub-fields">
+          <input type="text" maxlength="3" id="rgbR" placeholder="R">
+          <input type="text" maxlength="3" id="rgbG" placeholder="G">
+          <input type="text" maxlength="3" id="rgbB" placeholder="B">
+        </div>
+        <input type="text" id="rgbFull" placeholder="r,g,b" disabled>
+      </div>
+
+      <!-- CMYK -->
+      <div class="form-group">
+        <label>CMYK</label>
+        <div class="sub-fields">
+          <input type="text" id="cmykC" placeholder="C">
+          <input type="text" id="cmykM" placeholder="M">
+          <input type="text" id="cmykY" placeholder="Y">
+          <input type="text" id="cmykK" placeholder="K">
+        </div>
+        <input type="text" id="cmykFull" placeholder="c,m,y,k" disabled>
+      </div>
+
+      <!-- HSL -->
+      <div class="form-group">
+        <label>HSL</label>
+        <div class="sub-fields">
+          <input type="text" id="hslH" placeholder="H">
+          <input type="text" id="hslS" placeholder="S%">
+          <input type="text" id="hslL" placeholder="L%">
+        </div>
+        <input type="text" id="hslFull" placeholder="h,s%,l%" disabled>
+      </div>
+
+      <!-- Farbname -->
+      <div class="form-group">
+        <label for="colorName">Farbname</label>
+        <input type="text" id="colorNameInput" placeholder="z. B. Tomato">
+      </div>
+
+      <button class="reset-button" id="resetButton">Zurücksetzen</button>
+    </div>
+  </div>
+
+  <footer style="margin-top: 20px; font-size: 0.85rem; color: #777; text-align:center; max-width:100%;">
+    ©2025 | Script by Wolfgang Saal, Böllenborn
+  </footer>
+
+  <script>
+    // Hilfsfunktionen zur Farbkonvertierung (hex <-> rgb <-> hsl <-> cmyk)
+
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return { r, g, b };
+    }
+
+    function rgbToHex(r, g, b) {
+      return [r, g, b]
+        .map(x => Math.max(0, Math.min(255, parseInt(x))).toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    function rgbToHsl(r, g, b) {
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+      }
+      return {
+        h: Math.round(h),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100)
+      };
+    }
+
+    function hslToRgb(h, s, l) {
+      s /= 100;
+      l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+      const m = l - c / 2;
+      let r = 0, g = 0, b = 0;
+
+      if (h < 60) [r, g, b] = [c, x, 0];
+      else if (h < 120) [r, g, b] = [x, c, 0];
+      else if (h < 180) [r, g, b] = [0, c, x];
+      else if (h < 240) [r, g, b] = [0, x, c];
+      else if (h < 300) [r, g, b] = [x, 0, c];
+      else [r, g, b] = [c, 0, x];
+
+      return {
+        r: Math.round((r + m) * 255),
+        g: Math.round((g + m) * 255),
+        b: Math.round((b + m) * 255)
+      };
+    }
+
+    function rgbToCmyk(r, g, b) {
+      let c = 1 - r / 255;
+      let m = 1 - g / 255;
+      let y = 1 - b / 255;
+      const k = Math.min(c, m, y);
+      if (k === 1) return { c: 0, m: 0, y: 0, k: 1 };
+      c = (c - k) / (1 - k);
+      m = (m - k) / (1 - k);
+      y = (y - k) / (1 - k);
+      return {
+        c: +(c.toFixed(2)),
+        m: +(m.toFixed(2)),
+        y: +(y.toFixed(2)),
+        k: +(k.toFixed(2))
+      };
+    }
+
+    function cmykToRgb(c, m, y, k) {
+      return {
+        r: Math.round(255 * (1 - c) * (1 - k)),
+        g: Math.round(255 * (1 - m) * (1 - k)),
+        b: Math.round(255 * (1 - y) * (1 - k))
+      };
+    }
+
+    // Zugriff auf Felder
+    const hexR = document.getElementById("hexR");
+    const hexG = document.getElementById("hexG");
+    const hexB = document.getElementById("hexB");
+    const hexFull = document.getElementById("hexFull");
+
+    const rgbR = document.getElementById("rgbR");
+    const rgbG = document.getElementById("rgbG");
+    const rgbB = document.getElementById("rgbB");
+    const rgbFull = document.getElementById("rgbFull");
+
+    const cmykC = document.getElementById("cmykC");
+    const cmykM = document.getElementById("cmykM");
+    const cmykY = document.getElementById("cmykY");
+    const cmykK = document.getElementById("cmykK");
+    const cmykFull = document.getElementById("cmykFull");
+
+    const hslH = document.getElementById("hslH");
+    const hslS = document.getElementById("hslS");
+    const hslL = document.getElementById("hslL");
+    const hslFull = document.getElementById("hslFull");
+
+    const preview = document.getElementById("preview");
+    const colorPicker = document.getElementById("colorPicker");
+
+    const colorNameInput = document.getElementById("colorNameInput");
+    const resetButton = document.getElementById("resetButton");
+
+    // Update alles basierend auf RGB
+    function updateAllFromRGB(r, g, b) {
+      // HEX
+      const hex = rgbToHex(r, g, b);
+      hexR.value = hex.slice(0, 2);
+      hexG.value = hex.slice(2, 4);
+      hexB.value = hex.slice(4, 6);
+      hexFull.value = "#" + hex;
+
+      // RGB
+      rgbR.value = r;
+      rgbG.value = g;
+      rgbB.value = b;
+      rgbFull.value = `${r},${g},${b}`;
+
+      // HSL
+      const hsl = rgbToHsl(r, g, b);
+      hslH.value = hsl.h;
+      hslS.value = hsl.s;
+      hslL.value = hsl.l;
+      hslFull.value = `${hsl.h},${hsl.s}%,${hsl.l}%`;
+
+      // CMYK
+      const cmyk = rgbToCmyk(r, g, b);
+      cmykC.value = cmyk.c;
+      cmykM.value = cmyk.m;
+      cmykY.value = cmyk.y;
+      cmykK.value = cmyk.k;
+      cmykFull.value = `${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k}`;
+
+      // Preview
+      preview.style.backgroundColor = "#" + hex;
+      colorPicker.value = "#" + hex;
+    }
+
+    // Listener für alle Eingaben
+    function addInputListeners() {
+      [hexR, hexG, hexB].forEach(el => el.addEventListener("input", () => {
+        const val = hexR.value + hexG.value + hexB.value;
+        if (/^[0-9a-fA-F]{6}$/.test(val)) {
+          const rgb = hexToRgb(val);
+          updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+        }
+      }));
+
+      [rgbR, rgbG, rgbB].forEach(el => el.addEventListener("input", () => {
+        const r = parseInt(rgbR.value), g = parseInt(rgbG.value), b = parseInt(rgbB.value);
+        if ([r, g, b].every(x => !isNaN(x) && x >= 0 && x <= 255)) {
+          updateAllFromRGB(r, g, b);
+        }
+      }));
+
+      [cmykC, cmykM, cmykY, cmykK].forEach(el => el.addEventListener("input", () => {
+        const c = parseFloat(cmykC.value), m = parseFloat(cmykM.value), y = parseFloat(cmykY.value), k = parseFloat(cmykK.value);
+        if ([c, m, y, k].every(x => !isNaN(x) && x >= 0 && x <= 1)) {
+          const rgb = cmykToRgb(c, m, y, k);
+          updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+        }
+      }));
+
+      [hslH, hslS, hslL].forEach(el => el.addEventListener("input", () => {
+        const h = parseFloat(hslH.value), s = parseFloat(hslS.value), l = parseFloat(hslL.value);
+        if ([h, s, l].every(x => !isNaN(x))) {
+          const rgb = hslToRgb(h, s, l);
+          updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+        }
+      }));
+
+      colorPicker.addEventListener("input", () => {
+        const hex = colorPicker.value.slice(1);
+        const rgb = hexToRgb(hex);
+        updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+      });
+
+      resetButton.addEventListener("click", () => {
+        updateAllFromRGB(255, 0, 0);
+      });
+    }
+
+    // Initialisierung
+    updateAllFromRGB(255, 0, 0);
+    addInputListeners();
+  </script>
+</body>
+</html>
