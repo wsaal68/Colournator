@@ -20,10 +20,11 @@ Colournator ist eine Webanwendung zur Umrechnung und Anzeige von Farben in versc
 
 Das Projekt enthält einen GitHub Actions Workflow ([`.github/workflows/jekyll-docker.yml`](.github/workflows/jekyll-docker.yml)) für den automatischen Build mit Jekyll und Docker.
 
-## Autor
-
-© 2025 Wolfgang Saal, Böllenborn
 
 ## Lizenz
 
-Dieses Projekt steht unter einer freien MIT-Lizenz.
+MIT License – siehe [`LICENSE`](LICENSE).
+
+---
+
+© 2025 Wolfgang Saal, Böllenborn
