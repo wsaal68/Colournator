@@ -22,7 +22,7 @@ Das Projekt enthält einen GitHub Actions Workflow ([`.github/workflows/jekyll-d
 
 ## Autor
 
-Wolfgang Saal, Böllenborn
+© 2025 Wolfgang Saal, Böllenborn
 
 ## Lizenz
 
