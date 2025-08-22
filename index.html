@@ -29,9 +29,14 @@
       color: var(--text);
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
+    header {
+     text-align: center;
+     margin-bottom: -5.0rem; /* kleinerer Abstand */
+   }
+
+    header img {
+     max-width: 280px; /* größeres Logo */
+    height: auto;
     }
 
     .container {
@@ -143,7 +148,9 @@
   </style>
 </head>
 <body>
-  <h1>🎨 Colournator</h1>
+  <header>
+    <img src="logo_colournator.png" alt="Colournator Logo">
+  </header>
 
   <div class="container">
     <div class="color-row">
@@ -211,7 +218,8 @@
   </div>
 
   <footer style="margin-top: 20px; font-size: 0.85rem; color: #777; text-align:center; max-width:100%;">
-    ©2025 | Script by Wolfgang Saal, Böllenborn
+     © 2025 Wolfgang Saal, Böllenborn ·
+    <a href="https://github.com/wsaal68" target="_blank" rel="noopener">Projektseite bei Github</a>
   </footer>
 
   <script>
