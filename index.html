@@ -1,317 +1,532 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Colournator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Anwendung zur Umrechnung von Farben zwischen den verschiedenen Formaten" />
-  <meta name="keywords" content="farben, umrechner, live, picker, hex, rgb, cmyk,hsl, farbname" />
-  <meta name="author" content="Wolfgang Saal, Böllenborn" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="Farben live umrechnen: HEX, RGB, HSL, CMYK & Farbname – mit Kontrast, Copy-Buttons und deutschen Farbnamen." />
   <style>
-    :root {
-      --bg: #f9fafb;
-      --card: #ffffff;
-      --text: #111827;
-      --accent: #2563eb;
-      --border: #e5e7eb;
-      --error: #dc2626;
+    /* ===== Design Tokens (Light only) ===== */
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --text:#0b1220; --muted:#6b7280;
+      --accent:#2563eb; --accent-2:#22d3ee;
+      --border:#e5e7eb; --error:#ef4444; --ok:#10b981;
+      --radius:14px; --shadow:0 10px 28px rgba(0,0,0,.06);
+
+      /* Readonly/Disabled Optik */
+      --readonly-bg:#f3f4f6;
+
+      /* Logo-Cropping */
+      --logo-crop-top: 90px;
+      --logo-crop-bottom: 90px;
+      --logo-img-w: 280px; /* dargestellte Breite */
+    }
+    html{ color-scheme: light }
+
+    /* ===== Base ===== */
+    *{ box-sizing:border-box }
+    body{
+      margin:0; padding:2rem; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--bg),#e9eefb 40%,var(--bg));
+      color:var(--text);
+      transition: background-color .25s ease, color .25s ease;
     }
 
-    * {
-      box-sizing: border-box;
+    /* ===== Header & Logo (exakt 90/90 Cropping) ===== */
+    header{ text-align:center; margin-bottom:.5rem } /* kleinerer Abstand unter dem Header */
+    .logo-wrap{
+      display:inline-grid; place-items:center; padding:4px 8px; /* kleiner als vorher */
+      border-radius:12px; border:1px solid var(--border); background:var(--card); box-shadow:var(--shadow);
     }
 
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+    .logo-window{
+      width: var(--logo-img-w);
+      height: 120px;                 /* JS setzt die exakte Höhe nach Bild-Load */
+      overflow: hidden;              /* eigentliche Maske */
+      border-radius: 8px;
+      position: relative;
+      line-height: 0;
+    }
+    .logo-window img{
+      width: var(--logo-img-w);
+      height: auto;
+      display:block;
+      /* Fallback: wenn JS nicht greift, visuell oben/unten 90px „abschneiden“ */
+      clip-path: inset(var(--logo-crop-top) 0 var(--logo-crop-bottom) 0);
     }
 
-    header {
-     text-align: center;
-     margin-bottom: -5.0rem; /* kleinerer Abstand */
-   }
-
-    header img {
-     max-width: 280px; /* größeres Logo */
-    height: auto;
+    .container{
+      max-width:900px; margin: auto;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      padding: clamp(16px,3vw,28px);
+      transition: background-color .25s ease, border-color .25s ease;
     }
 
-    .container {
-      max-width: 700px;
-      margin: auto;
-      background: var(--card);
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-      padding: 2rem;
+    .row{ display:flex; gap:16px; align-items:center; flex-wrap:wrap }
+    .grow{ flex:1 1 0 }
+
+    .preview{
+      height:120px; border-radius:12px; border:1px solid var(--border); position:relative;
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .preview-sample{
+      position:absolute; inset:auto 10px 10px 10px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:600; padding:8px 10px; border-radius:10px;
+      background: color-mix(in hsl, var(--card) 70%, transparent);
+      border:1px solid var(--border);
+      backdrop-filter: blur(4px);
     }
 
-    .form-grid {
-      display: grid;
+    /* Optische Trennung zwischen Vorschau und Codes */
+    .divider{
+      margin: 18px 0;
+      height: 1px;
+      background: var(--border);
+      border-radius: 1px;
+    }
+
+    /* Werte-Grid (zweispaltig) mit vertikaler Linie */
+    .grid{ display:grid; gap:16px }
+    .grid-2{
       grid-template-columns: 1fr;
-      gap: 1.5rem;
+      position:relative;
+      background:
+        linear-gradient(to right, transparent calc(50% - .5px), var(--border) calc(50% - .5px), var(--border) calc(50% + .5px), transparent calc(50% + .5px));
+      background-repeat:no-repeat;
+      background-size:100% 0; /* mobil: Linie aus */
     }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-
-    label {
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .input-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .sub-fields {
-      display: flex;
-      gap: 0.3rem;
-    }
-
-    .sub-fields input[type="text"] {
-      width: 3.5rem;
-      text-align: center;
-    }
-
-    .full-field {
-      flex-grow: 1;
-    }
-
-    input[type="text"],
-    input[type="color"] {
-      padding: 0.5rem;
-      font-size: 0.95rem;
-      border: 1px solid var(--border);
-      border-radius: 0.4rem;
-      background-color: #fff;
-      color: var(--text);
-    }
-
-    input[disabled] {
-      background: #f3f4f6;
-      color: #6b7280;
-    }
-
-    input.error {
-      border-color: var(--error);
-      background-color: #fee2e2;
-    }
-
-    .preview {
-      height: 100px;
-      border-radius: 0.75rem;
-      border: 1px solid var(--border);
-      margin-top: 1.5rem;
-    }
-
-    .color-row {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .reset-button {
-      margin-top: 2rem;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      background-color: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .reset-button:hover {
-      background-color: #1e40af;
-    }
-
-    @media (max-width: 600px) {
-      .input-row {
-        flex-direction: column;
-        align-items: flex-start;
+    @media (min-width: 820px){
+      .grid-2{
+        grid-template-columns: 1fr 1fr;
+        background-size:100% 100%; /* Linie sichtbar */
       }
-      .sub-fields {
-        flex-wrap: wrap;
-      }
+    }
+
+    /* Gerahmte Code-Boxen */
+    .code-card{
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: color-mix(in hsl, var(--card) 92%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .group{ display:flex; flex-direction:column; gap:6px }
+    .sub{ display:flex; gap:6px; flex-wrap:wrap }
+    .sub input[type="text"]{ width:4rem; text-align:center }
+
+    label{ font-size:.9rem; font-weight:700 }
+    .hint{ color:var(--muted); font-size:.85rem }
+
+    input[type="text"], input[type="color"]{
+      padding:.6rem .7rem; font-size:.95rem; border-radius:10px;
+      border:1px solid var(--border); background:#fff; color:var(--text);
+      transition: background-color .25s, color .25s, border-color .25s, box-shadow .2s;
+    }
+    input[type="text"]:focus, input[type="color"]:focus{
+      outline:2px solid color-mix(in hsl, var(--accent) 45%, transparent);
+      box-shadow: 0 0 0 4px color-mix(in hsl, var(--accent) 20%, transparent);
+      border-color: var(--accent);
+    }
+
+    /* Readonly/Disabled klar erkennbar + Cursor */
+    input[readonly], input:disabled{
+      background: var(--readonly-bg) !important;
+      color: color-mix(in hsl, var(--text) 65%, transparent);
+      cursor: not-allowed;
+    }
+
+    .error{ border-color: var(--error) !important; background: color-mix(in hsl, var(--error) 8%, #fff) }
+
+    .copy-wrap{ display:flex; gap:6px; align-items:center }
+    .copy-btn{ border:1px solid var(--border); background:var(--card); color:var(--text);
+               padding:.35rem .5rem; border-radius:8px; cursor:pointer }
+    .copy-btn:hover{ filter:brightness(1.06) }
+
+    .toolbar{ display:flex; gap:8px; align-items:center; justify-content:flex-end }
+    .btn{ padding:.55rem .8rem; border-radius:10px; background:var(--card); color:var(--text); border:1px solid var(--border); cursor:pointer }
+    .btn.ghost{ background:transparent }
+
+    /* Kontrast-Badge */
+    .contrast{
+      margin-left:auto; padding:.45rem .6rem; border:1px solid var(--border);
+      border-radius:10px; font-size:.85rem; background:var(--card); color:var(--text);
+      white-space:nowrap;
+    }
+
+    /* Swatches */
+    .swatches{
+      display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+      padding-top:6px;
+    }
+    .swatch{
+      width:28px; height:28px; border-radius:8px; border:1px solid var(--border);
+      box-shadow:var(--shadow); cursor:pointer;
+    }
+
+    /* Segmented control (EN/DE) */
+    .seg{ display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden }
+    .seg-btn{ padding:.3rem .6rem; background:var(--card); color:var(--text); border:0; cursor:pointer }
+    .seg-btn[aria-pressed="true"]{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff }
+
+    /* Toast */
+    .toast{
+      position:fixed; right:16px; bottom:16px; z-index:60;
+      padding:.65rem .8rem; border-radius:12px; color:#fff; font-weight:600;
+      background:linear-gradient(135deg,var(--ok),var(--accent-2));
+      transform: translateY(10px); opacity:0; pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+      box-shadow:var(--shadow);
+    }
+    .toast.err{ background:linear-gradient(135deg, var(--error), #f59e0b) }
+    .toast.show{ opacity:1; transform: translateY(0) }
+
+    /* Responsive */
+    @media (max-width: 640px){
+      body{ padding: 1rem }
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo_colournator.png" alt="Colournator Logo">
+    <div class="logo-wrap">
+      <div class="logo-window" id="logoWindow">
+        <img id="logoImg" src="logo_colournator.png" alt="Colournator Logo" onerror="this.closest('.logo-wrap').style.display='none'">
+      </div>
+    </div>
   </header>
 
-  <div class="container">
-    <div class="color-row">
-      <div class="form-group" style="flex: 1;">
+  <main class="container" role="main">
+    <!-- Picker, Vorschau, Kontrast -->
+    <div class="row">
+      <div class="group grow">
         <label for="colorPicker">Farb-Picker</label>
-        <input type="color" id="colorPicker">
+        <input type="color" id="colorPicker" aria-label="Farb-Picker">
       </div>
-      <div class="preview" id="preview" style="flex: 2;"></div>
+
+      <div class="preview grow" id="preview" aria-label="Farbvorschau">
+        <div class="preview-sample" id="previewSample">
+          <span>Aa 123</span>
+          <span class="hint">Beispieltext</span>
+        </div>
+      </div>
+
+      <div id="contrastBadge" class="contrast" role="status" aria-live="polite">–</div>
     </div>
 
-    <div class="form-grid">
+    <!-- Optische Trennung -->
+    <div class="divider" aria-hidden="true"></div>
+
+    <!-- Werte (zweispaltig, gerahmt) -->
+    <div class="grid grid-2">
       <!-- HEX -->
-      <div class="form-group">
-        <label>HEX</label>
-        <div class="sub-fields">
-          <input type="text" maxlength="2" id="hexR" placeholder="RR">
-          <input type="text" maxlength="2" id="hexG" placeholder="GG">
-          <input type="text" maxlength="2" id="hexB" placeholder="BB">
+      <div class="group code-card">
+        <label for="hexFull">HEX</label>
+        <div class="sub">
+          <input type="text" maxlength="2" id="hexR" placeholder="RR" inputmode="text" aria-label="HEX R">
+          <input type="text" maxlength="2" id="hexG" placeholder="GG" inputmode="text" aria-label="HEX G">
+          <input type="text" maxlength="2" id="hexB" placeholder="BB" inputmode="text" aria-label="HEX B">
+          <span class="hint" aria-hidden="true">je 00–FF</span>
         </div>
-        <input type="text" id="hexFull" placeholder="#rrggbb" disabled>
+        <div class="copy-wrap">
+          <input type="text" id="hexFull" placeholder="#rrggbb" aria-label="HEX komplett" readonly aria-readonly="true" title="Nicht editierbar">
+          <button class="copy-btn" data-copy="hexFull" title="HEX kopieren">📋</button>
+        </div>
       </div>
 
       <!-- RGB -->
-      <div class="form-group">
-        <label>RGB</label>
-        <div class="sub-fields">
-          <input type="text" maxlength="3" id="rgbR" placeholder="R">
-          <input type="text" maxlength="3" id="rgbG" placeholder="G">
-          <input type="text" maxlength="3" id="rgbB" placeholder="B">
+      <div class="group code-card">
+        <label for="rgbFull">RGB</label>
+        <div class="sub">
+          <input type="text" maxlength="3" id="rgbR" placeholder="R" inputmode="numeric" aria-label="RGB R">
+          <input type="text" maxlength="3" id="rgbG" placeholder="G" inputmode="numeric" aria-label="RGB G">
+          <input type="text" maxlength="3" id="rgbB" placeholder="B" inputmode="numeric" aria-label="RGB B">
+          <span class="hint" aria-hidden="true">0–255</span>
         </div>
-        <input type="text" id="rgbFull" placeholder="r,g,b" disabled>
-      </div>
-
-      <!-- CMYK -->
-      <div class="form-group">
-        <label>CMYK</label>
-        <div class="sub-fields">
-          <input type="text" id="cmykC" placeholder="C">
-          <input type="text" id="cmykM" placeholder="M">
-          <input type="text" id="cmykY" placeholder="Y">
-          <input type="text" id="cmykK" placeholder="K">
+        <div class="copy-wrap">
+          <input type="text" id="rgbFull" placeholder="r,g,b" aria-label="RGB komplett" readonly aria-readonly="true" title="Nicht editierbar">
+          <button class="copy-btn" data-copy="rgbFull" title="RGB kopieren">📋</button>
         </div>
-        <input type="text" id="cmykFull" placeholder="c,m,y,k" disabled>
       </div>
 
       <!-- HSL -->
-      <div class="form-group">
-        <label>HSL</label>
-        <div class="sub-fields">
-          <input type="text" id="hslH" placeholder="H">
-          <input type="text" id="hslS" placeholder="S%">
-          <input type="text" id="hslL" placeholder="L%">
+      <div class="group code-card">
+        <label for="hslFull">HSL</label>
+        <div class="sub">
+          <input type="text" id="hslH" placeholder="H" inputmode="numeric" aria-label="HSL H">
+          <input type="text" id="hslS" placeholder="S%" inputmode="numeric" aria-label="HSL S">
+          <input type="text" id="hslL" placeholder="L%" inputmode="numeric" aria-label="HSL L">
+          <span class="hint" aria-hidden="true">H 0–359 • S/L 0–100</span>
         </div>
-        <input type="text" id="hslFull" placeholder="h,s%,l%" disabled>
+        <div class="copy-wrap">
+          <input type="text" id="hslFull" placeholder="h,s%,l%" aria-label="HSL komplett" readonly aria-readonly="true" title="Nicht editierbar">
+          <button class="copy-btn" data-copy="hslFull" title="HSL kopieren">📋</button>
+        </div>
       </div>
 
-      <!-- Farbname -->
-      <div class="form-group">
-        <label for="colorName">Farbname</label>
-        <input type="text" id="colorNameInput" placeholder="z. B. Tomato">
+      <!-- CMYK -->
+      <div class="group code-card">
+        <label for="cmykFull">CMYK</label>
+        <div class="sub">
+          <input type="text" id="cmykC" placeholder="C" inputmode="decimal" aria-label="CMYK C">
+          <input type="text" id="cmykM" placeholder="M" inputmode="decimal" aria-label="CMYK M">
+          <input type="text" id="cmykY" placeholder="Y" inputmode="decimal" aria-label="CMYK Y">
+          <input type="text" id="cmykK" placeholder="K" inputmode="decimal" aria-label="CMYK K">
+          <span class="hint" aria-hidden="true">0–1</span>
+        </div>
+        <div class="copy-wrap">
+          <input type="text" id="cmykFull" placeholder="c,m,y,k" aria-label="CMYK komplett" readonly aria-readonly="true" title="Nicht editierbar">
+          <button class="copy-btn" data-copy="cmykFull" title="CMYK kopieren">📋</button>
+        </div>
       </div>
-
-      <button class="reset-button" id="resetButton">Zurücksetzen</button>
     </div>
-  </div>
 
-  <footer style="margin-top: 20px; font-size: 0.85rem; color: #777; text-align:center; max-width:100%;">
-     © 2025 Wolfgang Saal, Böllenborn ·
+    <!-- Farbnamen-Block: volle Breite -->
+    <div class="group" style="margin-top:16px">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <label for="colorNameInput">Farbname</label>        
+        <div class="seg" id="langSeg" role="group" aria-label="Sprachauswahl Farbnamen">
+          <button type="button" class="seg-btn" data-lang="en" aria-pressed="true" title="Englisch">EN</button>
+          <button type="button" class="seg-btn" data-lang="de" aria-pressed="false" title="Deutsch">DE</button>
+        </div>
+      </div>
+      <div class="copy-wrap">
+        <input type="text" id="colorNameInput" placeholder="z. B. tomato • tomate" aria-describedby="colorNameHelp colorNameStatus">
+        <button class="copy-btn" data-copy="colorNameInput" title="Farbname kopieren">📋</button>
+      </div>
+      <small id="colorNameHelp" class="hint">Gültige Farbnamen in der gewählten Sprache werden übernommen. Bei nicht exakten Treffern wird der nächstgelegene Name (≈) gezeigt.</small>
+      <!-- Hinweis bei unbekanntem Namen -->
+      <small id="colorNameStatus" class="hint" style="color: var(--error); display:none"></small>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn ghost" id="clearRecents" type="button" title="Verlauf leeren">Farbhistorie löschen</button>
+      <button class="btn" id="resetButton" type="button" style="background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border:0">Zurücksetzen</button>
+    </div>
+
+    <!-- Swatches -->
+    <div class="group" style="margin-top:10px">
+      <label>Farbhistorie zuletzt genutzter Farben</label>
+      <div id="swatches" class="swatches" role="list"></div>
+    </div>
+  </main>
+
+  <!-- Live Region + Toast -->
+  <div id="srLive" aria-live="polite" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden">.</div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer style="margin-top: 16px; font-size: 0.85rem; color: #777; text-align:center; max-width:100%;">
+    © <span id="year"></span> Wolfgang Saal, Böllenborn ·
     <a href="https://github.com/wsaal68" target="_blank" rel="noopener">Projektseite bei Github</a>
   </footer>
 
   <script>
-    // Hilfsfunktionen zur Farbkonvertierung (hex <-> rgb <-> hsl <-> cmyk)
-
-    function hexToRgb(hex) {
-      const r = parseInt(hex.slice(0, 2), 16);
-      const g = parseInt(hex.slice(2, 4), 16);
-      const b = parseInt(hex.slice(4, 6), 16);
-      return { r, g, b };
+    /* ================= TOAST ================= */
+    const toast = document.getElementById('toast');
+    function showToast(msg, ok=true){
+      toast.textContent = msg;
+      toast.classList.toggle('err', !ok);
+      toast.classList.add('show');
+      setTimeout(()=> toast.classList.remove('show'), 1800);
+      const sr = document.getElementById('srLive'); sr && (sr.textContent = msg);
     }
 
-    function rgbToHex(r, g, b) {
-      return [r, g, b]
-        .map(x => Math.max(0, Math.min(255, parseInt(x))).toString(16).padStart(2, '0'))
-        .join('');
-    }
+    /* ========== Helpers ========== */
+    const clamp = (v,min,max)=> Math.min(max, Math.max(min, v));
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-    function rgbToHsl(r, g, b) {
-      r /= 255;
-      g /= 255;
-      b /= 255;
-      const max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h, s, l = (max + min) / 2;
+    /* ======= Logo Cropping exakt 90/90 ======= */
+    (function(){
+      const win = document.getElementById('logoWindow');
+      const img = document.getElementById('logoImg');
+      if(!win || !img) return;
 
-      if (max === min) {
-        h = s = 0;
-      } else {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
-        }
-        h *= 60;
+      function applyCrop(){
+        const cropTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--logo-crop-top')) || 90;
+        const cropBot = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--logo-crop-bottom')) || 90;
+
+        const displayW = win.getBoundingClientRect().width || img.getBoundingClientRect().width;
+        const natW = img.naturalWidth || displayW;
+        const natH = img.naturalHeight || displayW; // fallback quadratisch
+        if(!natW || !natH) return;
+
+        // Höhe des dargestellten Bildes bei fixierter Breite ermitteln (Seitenverhältnis)
+        const displayH = natH * (displayW / natW);
+        const visibleH = Math.max(0, displayH - (cropTop + cropBot));
+
+        // exakte Fensterhöhe setzen und Bild um cropTop nach oben schieben
+        win.style.height = visibleH + 'px';
+        img.style.transform = `translateY(-${cropTop}px)`;
       }
+
+      if(img.complete){ applyCrop(); } else { img.addEventListener('load', applyCrop, {once:true}); }
+      addEventListener('resize', applyCrop);
+    })();
+
+    /* ========== Color Conversions ========== */
+    function hexToRgb(hex){
+      let h = String(hex).replace(/^#/, '').trim();
+      if (h.length === 3) h = h.split('').map(ch=>ch+ch).join('');
+      if (!/^[\da-fA-F]{6}$/.test(h)) return null;
+      return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
+    }
+    function rgbToHex(r,g,b){
+      return [r,g,b].map(x=>clamp(parseInt(x||0,10),0,255).toString(16).padStart(2,'0')).join('');
+    }
+    function rgbToHsl(r,g,b){
+      r/=255; g/=255; b/=255;
+      const max=Math.max(r,g,b), min=Math.min(r,g,b);
+      let h=0, s=0; const l=(max+min)/2;
+      if (max!==min){
+        const d=max-min; s = l>.5 ? d/(2-max-min) : d/(max+min);
+        switch(max){ case r: h=(g-b)/d + (g<b?6:0); break;
+                      case g: h=(b-r)/d + 2; break;
+                      case b: h=(r-g)/d + 4; break; }
+        h*=60;
+      }
+      return { h: Math.round(h), s: Math.round(s*100), l: Math.round(l*100) };
+    }
+    function hslToRgb(h,s,l){
+      h=((+h%360)+360)%360; s=clamp(+s,0,100)/100; l=clamp(+l,0,100)/100;
+      const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+      let r=0,g=0,b=0;
+      if(h<60)[r,g,b]=[c,x,0]; else if(h<120)[r,g,b]=[x,c,0];
+      else if(h<180)[r,g,b]=[0,c,x]; else if(h<240)[r,g,b]=[0,x,c];
+      else if(h<300)[r,g,b]=[x,0,c]; else [r,g,b]=[c,0,x];
+      return { r: Math.round((r+m)*255), g: Math.round((g+m)*255), b: Math.round((b+m)*255) };
+    }
+    function rgbToCmyk(r,g,b){
+      r/=255; g/=255; b/=255; const k=1-Math.max(r,g,b);
+      if(k===1) return {c:0,m:0,y:0,k:1};
       return {
-        h: Math.round(h),
-        s: Math.round(s * 100),
-        l: Math.round(l * 100)
+        c:+(((1-r-k)/(1-k))||0).toFixed(2),
+        m:+(((1-g-k)/(1-k))||0).toFixed(2),
+        y:+(((1-b-k)/(1-k))||0).toFixed(2),
+        k:+k.toFixed(2)
       };
     }
-
-    function hslToRgb(h, s, l) {
-      s /= 100;
-      l /= 100;
-      const c = (1 - Math.abs(2 * l - 1)) * s;
-      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-      const m = l - c / 2;
-      let r = 0, g = 0, b = 0;
-
-      if (h < 60) [r, g, b] = [c, x, 0];
-      else if (h < 120) [r, g, b] = [x, c, 0];
-      else if (h < 180) [r, g, b] = [0, c, x];
-      else if (h < 240) [r, g, b] = [0, x, c];
-      else if (h < 300) [r, g, b] = [x, 0, c];
-      else [r, g, b] = [c, 0, x];
-
-      return {
-        r: Math.round((r + m) * 255),
-        g: Math.round((g + m) * 255),
-        b: Math.round((b + m) * 255)
-      };
+    function cmykToRgb(c,m,y,k){
+      c=+c; m=+m; y=+y; k=+k;
+      if([c,m,y,k].some(v=>isNaN(v))) return null;
+      return { r: Math.round(255*(1-c)*(1-k)), g: Math.round(255*(1-m)*(1-k)), b: Math.round(255*(1-y)*(1-k)) };
     }
 
-    function rgbToCmyk(r, g, b) {
-      let c = 1 - r / 255;
-      let m = 1 - g / 255;
-      let y = 1 - b / 255;
-      const k = Math.min(c, m, y);
-      if (k === 1) return { c: 0, m: 0, y: 0, k: 1 };
-      c = (c - k) / (1 - k);
-      m = (m - k) / (1 - k);
-      y = (y - k) / (1 - k);
-      return {
-        c: +(c.toFixed(2)),
-        m: +(m.toFixed(2)),
-        y: +(y.toFixed(2)),
-        k: +(k.toFixed(2))
-      };
+    /* ========== CSS Color Names (EN) ========== */
+    const CSS_COLOR_KEYWORDS = [
+      "aliceblue","antiquewhite","aqua","aquamarine","azure","beige","bisque","black","blanchedalmond","blue",
+      "blueviolet","brown","burlywood","cadetblue","chartreuse","chocolate","coral","cornflowerblue","cornsilk",
+      "crimson","cyan","darkblue","darkcyan","darkgoldenrod","darkgray","darkgreen","darkgrey","darkkhaki",
+      "darkmagenta","darkolivegreen","darkorange","darkorchid","darkred","darksalmon","darkseagreen","darkslateblue",
+      "darkslategray","darkslategrey","darkturquoise","darkviolet","deeppink","deepskyblue","dimgray","dimgrey",
+      "dodgerblue","firebrick","floralwhite","forestgreen","fuchsia","gainsboro","ghostwhite","gold","goldenrod",
+      "gray","green","greenyellow","grey","honeydew","hotpink","indianred","indigo","ivory","khaki","lavender",
+      "lavenderblush","lawngreen","lemonchiffon","lightblue","lightcoral","lightcyan","lightgoldenrodyellow",
+      "lightgray","lightgreen","lightgrey","lightpink","lightsalmon","lightseagreen","lightskyblue","lightslategray",
+      "lightslategrey","lightsteelblue","lightyellow","lime","limegreen","linen","magenta","maroon","mediumaquamarine",
+      "mediumblue","mediumorchid","mediumpurple","mediumseagreen","mediumslateblue","mediumspringgreen",
+      "mediumturquoise","mediumvioletred","midnightblue","mintcream","mistyrose","moccasin","navajowhite","navy",
+      "oldlace","olive","olivedrab","orange","orangered","orchid","palegoldenrod","palegreen","paleturquoise",
+      "palevioletred","papayawhip","peachpuff","peru","pink","plum","powderblue","purple","rebeccapurple","red",
+      "rosybrown","royalblue","saddlebrown","salmon","sandybrown","seagreen","seashell","sienna","silver","skyblue",
+      "slateblue","slategray","slategrey","snow","springgreen","steelblue","tan","teal","thistle","tomato","turquoise",
+      "violet","wheat","white","whitesmoke","yellow","yellowgreen"
+    ];
+    const __nameRgbCache = new Map();
+    const isValidCssColorName = (name)=> {
+      const key = String(name).trim().toLowerCase();
+      return !!key && CSS && CSS.supports && CSS.supports('color', key);
+    };
+    function nameToRgb(name){
+      const key = String(name).trim().toLowerCase();
+      if (!isValidCssColorName(key)) return null;
+      if (__nameRgbCache.has(key)) return __nameRgbCache.get(key);
+      const el = document.createElement('span');
+      el.style.color = key; document.body.appendChild(el);
+      const rgbStr = getComputedStyle(el).color; document.body.removeChild(el);
+      const m = rgbStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (!m) return null;
+      const out = { r:+m[1], g:+m[2], b:+m[3] };
+      __nameRgbCache.set(key, out); return out;
+    }
+    function findNearestCssName(r,g,b){
+      let bestName=null, bestD=Infinity, exact=false;
+      for(const name of CSS_COLOR_KEYWORDS){
+        const n = nameToRgb(name); if(!n) continue;
+        const dr=n.r-r, dg=n.g-g, db=n.b-b, d2=dr*dr+dg*dg+db*db;
+        if(d2===0){ bestName=name; exact=true; bestD=0; break; }
+        if(d2<bestD){ bestD=d2; bestName=name; }
+      }
+      return { name: bestName, exact, distance: Math.sqrt(bestD) };
     }
 
-    function cmykToRgb(c, m, y, k) {
-      return {
-        r: Math.round(255 * (1 - c) * (1 - k)),
-        g: Math.round(255 * (1 - m) * (1 - k)),
-        b: Math.round(255 * (1 - y) * (1 - k))
-      };
+    /* ========== Deutsche Farbnamen – Mapping EN <-> DE ========== */
+    const EN_TO_DE = {
+      red:"rot", blue:"blau", green:"grün", yellow:"gelb", black:"schwarz", white:"weiß",
+      gray:"grau", grey:"grau", lightgray:"hellgrau", lightgrey:"hellgrau", darkgray:"dunkelgrau", darkgrey:"dunkelgrau",
+      orange:"orange", violet:"violett", purple:"lila", indigo:"indigo", magenta:"magenta", cyan:"cyan",
+      turquoise:"türkis", aquamarine:"aquamarin", seagreen:"seegrün", teal:"blaugrün",
+      royalblue:"königsblau", steelblue:"stahlblau", skyblue:"himmelblau", midnightblue:"mitternachtsblau",
+      coral:"koralle", salmon:"lachs", sandybrown:"sandbraun", chocolate:"schokolade", sienna:"sienna", saddlebrown:"sattelbraun",
+      olive:"oliv", olivedrab:"olivgrün", gold:"gold", goldenrod:"goldgelb", khaki:"khaki",
+      lavender:"lavendel", plum:"pflaume", orchid:"orchidee", tomato:"tomate",
+      peachpuff:"pfirsich", papayawhip:"papayacreme", ivory:"elfenbein", linen:"leinen",
+      mintcream:"minzcreme", oldlace:"altweiß", wheat:"weizen", thistle:"distel",
+      firebrick:"ziegelrot", dodgerblue:"dodgerblau", rebeccapurple:"rebeccalila", slategray:"schiefergrau", slategrey:"schiefergrau",
+      seashell:"muschelweiß", gainsboro:"gainsboro", honeydew:"honigtau", snow:"schneeweiß", whitesmoke:"rauchweiß",
+      beige:"beige", brown:"braun", pink:"rosa", peru:"peru", tan:"lederbraun",
+      darkred:"dunkelrot", darkgreen:"dunkelgrün", darkblue:"dunkelblau"
+    };
+    const DE_TO_EN = Object.fromEntries(Object.entries(EN_TO_DE).map(([en,de])=>[de,en]));
+    Object.assign(DE_TO_EN, { weiss:"white", grau:"gray", dunkelgrau:"darkgray", hellgrau:"lightgray" });
+
+    /* ========== Sprachumschalter ========== */
+    const LANG_KEY = 'col_name_lang';
+    const langSeg = document.getElementById('langSeg');
+    let nameLang = localStorage.getItem(LANG_KEY) || 'en';
+    function setLangUI(){
+      [...langSeg.querySelectorAll('.seg-btn')].forEach(b=>{
+        const on = b.dataset.lang === nameLang;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    setLangUI();
+    langSeg.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.seg-btn'); if(!btn) return;
+      nameLang = btn.dataset.lang;
+      localStorage.setItem(LANG_KEY, nameLang);
+      setLangUI();
+      const rgb = hexToRgb(colorPicker.value);
+      if(rgb) updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+    });
+
+    /* ========== Kontrast (WCAG) ========== */
+    const contrastBadge = document.getElementById('contrastBadge');
+    const previewSample = document.getElementById('previewSample');
+    const srgbToLin = c => { c/=255; return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); };
+    const relLuminance = (r,g,b) => 0.2126*srgbToLin(r)+0.7152*srgbToLin(g)+0.0722*srgbToLin(b);
+    function contrastRatio(rgb1, rgb2){
+      const L1 = relLuminance(rgb1.r,rgb1.g,rgb1.b);
+      const L2 = relLuminance(rgb2.r,rgb2.g,rgb2.b);
+      const [hi,lo] = L1>=L2 ? [L1,L2] : [L2,L1];
+      return (hi+0.05)/(lo+0.05);
+    }
+    const wcagLabel = r => r>=7 ? 'AAA' : r>=4.5 ? 'AA' : r>=3 ? 'AA (groß)' : 'unzureichend';
+    function updateContrastBadge(r,g,b){
+      const white = {r:255,g:255,b:255}, black = {r:0,g:0,b:0};
+      const col = {r,g,b};
+      const crW = contrastRatio(col, white), crB = contrastRatio(col, black);
+      const bestText = (crW>crB) ? 'weiß' : 'schwarz';
+      const bestCR = Math.max(crW, crB);
+      const rating = wcagLabel(bestCR);
+      contrastBadge.textContent = `Kontrast ${bestCR.toFixed(2)}:1 • Text: ${bestText} • ${rating}`;
+      previewSample.style.color = (bestText === 'weiß') ? '#fff' : '#000';
     }
 
-    // Zugriff auf Felder
+    /* ========== DOM (Felder) ========== */
     const hexR = document.getElementById("hexR");
     const hexG = document.getElementById("hexG");
     const hexB = document.getElementById("hexB");
@@ -333,94 +548,250 @@
     const hslL = document.getElementById("hslL");
     const hslFull = document.getElementById("hslFull");
 
-    const preview = document.getElementById("preview");
     const colorPicker = document.getElementById("colorPicker");
-
+    const preview = document.getElementById("preview");
     const colorNameInput = document.getElementById("colorNameInput");
     const resetButton = document.getElementById("resetButton");
+    const clearRecentsBtn = document.getElementById("clearRecents");
+    const swatchesEl = document.getElementById("swatches");
 
-    // Update alles basierend auf RGB
-    function updateAllFromRGB(r, g, b) {
+    /* ===== Farbname-Status/Hint ===== */
+    const colorNameStatus = document.getElementById('colorNameStatus');
+    function setNameStatus(msg){
+      if(!colorNameStatus) return;
+      colorNameStatus.textContent = msg || '';
+      colorNameStatus.style.display = msg ? 'block' : 'none';
+    }
+    function suggestNames(query, lang){
+      const q = String(query).toLowerCase();
+      const list = lang === 'de' ? Object.keys(DE_TO_EN) : CSS_COLOR_KEYWORDS;
+      const starts = list.filter(n => n.startsWith(q));
+      const contains = list.filter(n => !n.startsWith(q) && n.includes(q));
+      return [...starts, ...contains].slice(0, 6);
+    }
+
+    /* ========== Copy Buttons ========== */
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-copy]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-copy');
+      const el = document.getElementById(id);
+      if(!el) return;
+      const val = String(el.value || el.textContent || '').trim();
+      if(!val){ showToast('Nichts zu kopieren', false); return; }
+      navigator.clipboard?.writeText(val).then(()=> showToast('Kopiert')).catch(()=> showToast('Konnte nicht kopieren', false));
+    });
+
+    /* ========== Recents / Swatches ========== */
+    const RECENT_KEY = 'col_recent_colors';
+    let recents = [];
+    function loadRecents(){
+      try{ const raw = localStorage.getItem(RECENT_KEY); if(raw) recents = JSON.parse(raw) || []; }catch(_){}
+      if(!Array.isArray(recents) || recents.length===0){
+        recents = ['ff0000','00a97a','2563eb','f59e0b','10b981','9333ea','ef4444','111827'];
+      }
+      renderSwatches();
+    }
+    function saveRecents(){ try{ localStorage.setItem(RECENT_KEY, JSON.stringify(recents)); }catch(_){ } }
+    function pushRecent(hex){
+      const h = String(hex).replace('#','').toLowerCase();
+      recents = [h, ...recents.filter(x => x !== h)].slice(0, 12);
+      saveRecents(); renderSwatches();
+    }
+    function renderSwatches(){
+      swatchesEl.innerHTML = '';
+      recents.forEach(h=>{
+        const b = document.createElement('button');
+        b.className = 'swatch'; b.style.backgroundColor = '#'+h; b.title = '#'+h;
+        b.setAttribute('role','listitem');
+        b.addEventListener('click', ()=>{
+          const rgb = hexToRgb(h);
+          if(rgb) updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+        });
+        swatchesEl.appendChild(b);
+      });
+    }
+    clearRecentsBtn.addEventListener('click', ()=>{
+      recents = []; saveRecents(); renderSwatches(); showToast('Verlauf geleert');
+    });
+
+    /* ========== Validation helpers ========== */
+    const setErr = (el, bad)=> el.classList.toggle('error', !!bad);
+    function validateHexTriplet(){
+      const val = (hexR.value + hexG.value + hexB.value).trim();
+      const okR = /^[\da-fA-F]{0,2}$/.test(hexR.value);
+      const okG = /^[\da-fA-F]{0,2}$/.test(hexG.value);
+      const okB = /^[\da-fA-F]{0,2}$/.test(hexB.value);
+      setErr(hexR,!okR); setErr(hexG,!okG); setErr(hexB,!okB);
+      if (/^[\da-fA-F]{6}$/.test(val)) return val;
+      return null;
+    }
+    function validateRgbTriplet(){
+      const r = parseInt(rgbR.value,10), g = parseInt(rgbG.value,10), b = parseInt(rgbB.value,10);
+      const ok = [r,g,b].every(x => Number.isInteger(x) && x>=0 && x<=255);
+      setErr(rgbR, !(Number.isInteger(r) && r>=0 && r<=255));
+      setErr(rgbG, !(Number.isInteger(g) && g>=0 && g<=255));
+      setErr(rgbB, !(Number.isInteger(b) && b>=0 && b<=255));
+      return ok ? {r,g,b} : null;
+    }
+    function validateCmykQuad(){
+      const c=parseFloat(cmykC.value), m=parseFloat(cmykM.value), y=parseFloat(cmykY.value), k=parseFloat(cmykK.value);
+      const ok = [c,m,y,k].every(x => !isNaN(x) && x>=0 && x<=1);
+      setErr(cmykC, isNaN(c)||c<0||c>1); setErr(cmykM, isNaN(m)||m<0||m>1);
+      setErr(cmykY, isNaN(y)||y<0||y>1); setErr(cmykK, isNaN(k)||k<0||k>1);
+      return ok ? {c,m,y,k} : null;
+    }
+    function validateHsl(){
+      const h=parseFloat(hslH.value), s=parseFloat(hslS.value), l=parseFloat(hslL.value);
+      const okH = !isNaN(h);
+      const okS = !isNaN(s) && s>=0 && s<=100;
+      const okL = !isNaN(l) && l>=0 && l<=100;
+      setErr(hslH, !okH); setErr(hslS, !okS); setErr(hslL, !okL);
+      return (okH && okS && okL) ? {h,s,l} : null;
+    }
+
+    /* ========== Sprach-Utilities ========== */
+    function formatNameForDisplay(enName){
+      if(!enName) return '';
+      return nameLang === 'de' ? (EN_TO_DE[enName] || enName) : enName;
+    }
+    function parseNameInputToEN(inputValue){
+      const v = String(inputValue||'').trim().toLowerCase();
+      if(!v) return null;
+      if(nameLang === 'de'){
+        const en = DE_TO_EN[v];
+        return en || null;
+      }
+      return v; // EN
+    }
+
+    /* ========== Core Updater ========== */
+    function updateAllFromRGB(r,g,b){
+      r = clamp(+r,0,255); g = clamp(+g,0,255); b = clamp(+b,0,255);
+
       // HEX
-      const hex = rgbToHex(r, g, b);
-      hexR.value = hex.slice(0, 2);
-      hexG.value = hex.slice(2, 4);
-      hexB.value = hex.slice(4, 6);
-      hexFull.value = "#" + hex;
+      const hex = rgbToHex(r,g,b);
+      hexR.value = hex.slice(0,2).toUpperCase();
+      hexG.value = hex.slice(2,4).toUpperCase();
+      hexB.value = hex.slice(4,6).toUpperCase();
+      hexFull.value = '#'+hex;
 
       // RGB
-      rgbR.value = r;
-      rgbG.value = g;
-      rgbB.value = b;
+      rgbR.value = r; rgbG.value = g; rgbB.value = b;
       rgbFull.value = `${r},${g},${b}`;
 
       // HSL
-      const hsl = rgbToHsl(r, g, b);
-      hslH.value = hsl.h;
-      hslS.value = hsl.s;
-      hslL.value = hsl.l;
+      const hsl = rgbToHsl(r,g,b);
+      hslH.value = hsl.h; hslS.value = hsl.s; hslL.value = hsl.l;
       hslFull.value = `${hsl.h},${hsl.s}%,${hsl.l}%`;
 
       // CMYK
-      const cmyk = rgbToCmyk(r, g, b);
-      cmykC.value = cmyk.c;
-      cmykM.value = cmyk.m;
-      cmykY.value = cmyk.y;
-      cmykK.value = cmyk.k;
+      const cmyk = rgbToCmyk(r,g,b);
+      cmykC.value = cmyk.c; cmykM.value = cmyk.m; cmykY.value = cmyk.y; cmykK.value = cmyk.k;
       cmykFull.value = `${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k}`;
 
-      // Preview
-      preview.style.backgroundColor = "#" + hex;
-      colorPicker.value = "#" + hex;
+      // Preview + Picker
+      preview.style.backgroundColor = '#'+hex;
+      colorPicker.value = '#'+hex;
+
+      // CSS-Farbname (exakt oder Näherung)
+      const { name: nameEN, exact } = findNearestCssName(r,g,b);
+      if(nameEN){
+        const shown = formatNameForDisplay(nameEN);
+        colorNameInput.value = exact ? shown : `${shown} (≈)`;
+        colorNameInput.title = exact ? `Exakter Farbname (${nameEN})` : `Nächstgelegener Farbname (${nameEN})`;
+      }else{
+        colorNameInput.value = ''; colorNameInput.title = '';
+      }
+
+      // Kontrast-Info + Swatches
+      updateContrastBadge(r,g,b);
+      pushRecent(hex);
+
+      // Name-Hinweis zurücksetzen (falls vorher Fehler)
+      setNameStatus('');
+      colorNameInput.classList.remove('error');
     }
 
-    // Listener für alle Eingaben
-    function addInputListeners() {
-      [hexR, hexG, hexB].forEach(el => el.addEventListener("input", () => {
-        const val = hexR.value + hexG.value + hexB.value;
-        if (/^[0-9a-fA-F]{6}$/.test(val)) {
-          const rgb = hexToRgb(val);
-          updateAllFromRGB(rgb.r, rgb.g, rgb.b);
-        }
+    /* ========== Listeners ========== */
+    function addInputListeners(){
+      // HEX triplet
+      [hexR, hexG, hexB].forEach(el => el.addEventListener('input', ()=>{
+        const val = validateHexTriplet();
+        if (val){ const rgb = hexToRgb(val); rgb && updateAllFromRGB(rgb.r,rgb.g,rgb.b); }
       }));
 
-      [rgbR, rgbG, rgbB].forEach(el => el.addEventListener("input", () => {
-        const r = parseInt(rgbR.value), g = parseInt(rgbG.value), b = parseInt(rgbB.value);
-        if ([r, g, b].every(x => !isNaN(x) && x >= 0 && x <= 255)) {
-          updateAllFromRGB(r, g, b);
-        }
+      // RGB triplet
+      [rgbR, rgbG, rgbB].forEach(el => el.addEventListener('input', ()=>{
+        const rgb = validateRgbTriplet();
+        if (rgb) updateAllFromRGB(rgb.r, rgb.g, rgb.b);
       }));
 
-      [cmykC, cmykM, cmykY, cmykK].forEach(el => el.addEventListener("input", () => {
-        const c = parseFloat(cmykC.value), m = parseFloat(cmykM.value), y = parseFloat(cmykY.value), k = parseFloat(cmykK.value);
-        if ([c, m, y, k].every(x => !isNaN(x) && x >= 0 && x <= 1)) {
-          const rgb = cmykToRgb(c, m, y, k);
-          updateAllFromRGB(rgb.r, rgb.g, rgb.b);
-        }
+      // CMYK
+      [cmykC, cmykM, cmykY, cmykK].forEach(el => el.addEventListener('input', ()=>{
+        const c = validateCmykQuad();
+        if (c){ const rgb = cmykToRgb(c.c,c.m,c.y,c.k); rgb && updateAllFromRGB(rgb.r,rgb.g,rgb.b); }
       }));
 
-      [hslH, hslS, hslL].forEach(el => el.addEventListener("input", () => {
-        const h = parseFloat(hslH.value), s = parseFloat(hslS.value), l = parseFloat(hslL.value);
-        if ([h, s, l].every(x => !isNaN(x))) {
-          const rgb = hslToRgb(h, s, l);
-          updateAllFromRGB(rgb.r, rgb.g, rgb.b);
-        }
+      // HSL
+      [hslH, hslS, hslL].forEach(el => el.addEventListener('input', ()=>{
+        const hsl = validateHsl();
+        if (hsl){ const rgb = hslToRgb(hsl.h,hsl.s,hsl.l); updateAllFromRGB(rgb.r,rgb.g,rgb.b); }
       }));
 
-      colorPicker.addEventListener("input", () => {
-        const hex = colorPicker.value.slice(1);
-        const rgb = hexToRgb(hex);
-        updateAllFromRGB(rgb.r, rgb.g, rgb.b);
+      // Picker
+      colorPicker.addEventListener('input', ()=>{
+        const rgb = hexToRgb(colorPicker.value);
+        if (rgb) updateAllFromRGB(rgb.r,rgb.g,rgb.b);
       });
 
-      resetButton.addEventListener("click", () => {
-        updateAllFromRGB(255, 0, 0);
+      // Farbname: validieren + Hinweise + Setzen
+      let nameInputTimer;
+      colorNameInput.addEventListener('input', ()=>{
+        clearTimeout(nameInputTimer);
+        nameInputTimer = setTimeout(()=>{
+          const raw = colorNameInput.value.trim();
+          if(!raw){
+            setNameStatus('');
+            colorNameInput.classList.remove('error');
+            return;
+          }
+          const en = parseNameInputToEN(raw);
+
+          // DE: kein Mapping gefunden -> Vorschläge (DE)
+          if(nameLang === 'de' && !en){
+            const sugs = suggestNames(raw, 'de');
+            setNameStatus(`Unbekannter Farbname (Deutsch). ${sugs.length ? 'Meintest du: ' + sugs.join(' · ') : ''}`);
+            colorNameInput.classList.add('error');
+            return;
+          }
+
+          // EN: kein gültiger CSS-Name -> Vorschläge (EN)
+          if(!isValidCssColorName(en)){
+            const sugs = suggestNames(raw, 'en');
+            setNameStatus(`Kein gültiger CSS-Farbname. ${sugs.length ? 'Meintest du: ' + sugs.join(' · ') : ''}`);
+            colorNameInput.classList.add('error');
+            return;
+          }
+
+          // OK
+          setNameStatus('');
+          colorNameInput.classList.remove('error');
+          const n = nameToRgb(en);
+          if(n) updateAllFromRGB(n.r,n.g,n.b);
+        }, 200);
       });
+
+      // Reset
+      resetButton.addEventListener('click', ()=> updateAllFromRGB(255,0,0));
     }
 
-    // Initialisierung
-    updateAllFromRGB(255, 0, 0);
-    addInputListeners();
+    /* ========== Init ========== */
+    (function init(){
+      loadRecents();
+      updateAllFromRGB(255,0,0);
+      addInputListeners();
+    })();
   </script>
 </body>
 </html>
